@@ -3,136 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Search & Play</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Spotify Search Project</title>
+    <link rel="icon" href="favicon.ico">
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        nav {
-            background: #1db954;
+            padding: 20px;
+            background-color: #121212;
             color: white;
-            padding: 1rem;
-            width: 100%;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .search-container {
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-
-        nav .logo h1 {
-            margin: 0;
-        }
-
-        nav .search-container {
+        #login-status {
             display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
-        nav input {
-            padding: 0.5rem;
-            border: none;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-
-        nav button {
-            padding: 0.5rem 1rem;
+        #login-btn, #logout-btn {
+            padding: 10px 20px;
             background-color: #1db954;
+            color: white;
             border: none;
-            color: white;
-            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
         }
-
-        #results {
-            padding: 20px;
-            margin-top: 20px;
-            overflow-y: auto;
+        #login-btn:hover, #logout-btn:hover {
+            background-color: #1ed760;
         }
-
-        .result-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .result-item img {
-            width: 50px;
-            height: 50px;
-            margin-right: 15px;
-        }
-
-        #spotify-player {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #000;
-            color: white;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            padding: 20px;
-            left: 0;
-        }
-
-        #player-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        #player-controls button {
+        #search-input {
             padding: 10px;
-            background-color: #1db954;
-            border: none;
+            font-size: 16px;
+            border-radius: 5px;
+            width: 300px;
+            border: 1px solid #333;
+            background-color: #333;
             color: white;
-            border-radius: 50%;
+        }
+        #search-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1db954;
+            color: white;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
-
-        #player-controls button:hover {
-            background-color: #1aaf47;
+        #search-btn:hover {
+            background-color: #1ed760;
         }
-
-        #current-track {
-            color: white;
-            margin-left: 20px;
+        #song-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
-
-        #userInfo {
-            color: white;
+        .song {
+            background-color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            width: 250px;
+            box-sizing: border-box;
+        }
+        .song a {
+            color: #1db954;
+            text-decoration: none;
+        }
+        .song p {
+            font-size: 14px;
+        }
+        .song p strong {
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <nav>
-        <div class="logo">
-            <h1>Spotify Search & Play</h1>
-        </div>
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search for songs, artists, or genres" />
-            <button id="searchBtn">Search</button>
-        </div>
-        <!-- Login/Logout Button and User Info -->
-        <div id="userInfo">Not logged in</div>
-        <button id="loginBtn">Login with Spotify</button>
-    </nav>
+    <h1>Spotify Search</h1>
 
-    <!-- Main Content Area for Search Results -->
-    <div id="results"></div>
-
-    <!-- Spotify Player Controls -->
-    <div id="spotify-player">
-        <div id="player-controls">
-            <button id="prevBtn">Prev</button>
-            <button id="playPauseBtn">Play</button>
-            <button id="nextBtn">Next</button>
-            <div id="current-track">No track playing</div>
-        </div>
+    <div id="login-status">
+        <button id="login-btn">Login with Spotify</button>
+        <button id="logout-btn" style="display:none;">Logout</button>
     </div>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search for songs, artists, or albums" />
+        <button id="search-btn">Search</button>
+    </div>
+
+    <div id="song-list"></div>
 
     <script src="script.js"></script>
 </body>
