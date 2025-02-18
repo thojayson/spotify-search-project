@@ -4,6 +4,7 @@ const resultsDiv = document.getElementById("results");
 
 const clientID = "91786cabf39742208a39728600d93595";
 const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
+const redirectUri = "https://thojayson.github.io/spotify-search-project/";
 
 // Function to get access token from Spotify API
 async function getAccessToken() {
