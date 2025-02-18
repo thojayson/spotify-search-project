@@ -1,3 +1,14 @@
+document.addEventListener('DOMContentLoaded', () => {
+    checkLoginStatus();  // Ensure this is called after the DOM is loaded
+});
+
+const clientID = "91786cabf39742208a39728600d93595";
+const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
+const redirectUri = "https://thojayson.github.io/spotify-search-project/";
+let accessToken = null;
+let player = null;
+let isPlaying = false;
+
 const searchBtn = document.getElementById("searchBtn");
 const searchInput = document.getElementById("searchInput");
 const resultsDiv = document.getElementById("results");
@@ -6,37 +17,46 @@ const playPauseBtn = document.getElementById("playPauseBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const currentTrackDiv = document.getElementById("current-track");
-
-const clientID = "91786cabf39742208a39728600d93595";
-const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
-const redirectUri = "https://thojayson.github.io/spotify-search-project/";
-let accessToken = null;
-let player = null;
-let currentTrackUri = null;
-let isPlaying = false;
+const userInfoDiv = document.getElementById("userInfo");
 
 // Check if the user is logged in
 function checkLoginStatus() {
     const token = localStorage.getItem("access_token");
-    if (token) {
+    if (token && userInfoDiv) {
         accessToken = token;
-        loginBtn.textContent = "Logged In";
-        loginBtn.disabled = true;
-        displayUserInfo();
+        loginBtn.textContent = "Logout";
+        loginBtn.onclick = logoutSpotify;
+        displayUserInfo();  // Display user's name after login
         initializeSpotifyPlayer();  // Initialize the player when logged in
+    } else {
+        loginBtn.textContent = "Login with Spotify";
+        loginBtn.onclick = loginSpotify;
+        userInfoDiv.textContent = "Not logged in";
     }
 }
 
-// Display the user's info after login
+// Display user info (name)
 function displayUserInfo() {
-    const userInfoDiv = document.getElementById("userInfo");
-    userInfoDiv.textContent = `Logged in as: ${localStorage.getItem("user_name")}`;
+    const userName = localStorage.getItem("user_name");
+    if (userName && userInfoDiv) {
+        userInfoDiv.textContent = `Logged in as: ${userName}`;
+    } else {
+        userInfoDiv.textContent = "Logged in as: Unknown";
+    }
 }
 
 // Redirect to Spotify login
 function loginSpotify() {
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-library-read playlist-read-private playlist-read-collaborative streaming user-read-playback-state user-modify-playback-state`;
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-library-read playlist-read-private playlist-read-collaborative streaming`;
     window.location.href = authUrl;
+}
+
+// Logout and remove session data
+function logoutSpotify() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user_name");
+    accessToken = null;
+    checkLoginStatus(); // Update UI after logout
 }
 
 // Get access token from authorization code
@@ -60,43 +80,6 @@ async function getAccessTokenFromCode(code) {
         localStorage.setItem("access_token", accessToken); // Store token
         window.location.href = "/"; // Redirect back to homepage
     }
-}
-
-// Initialize Spotify Player
-function initializeSpotifyPlayer() {
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    document.body.appendChild(script);
-
-    script.onload = () => {
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            player = new Spotify.Player({
-                name: "Web Playback SDK",
-                getOAuthToken: (cb) => { cb(accessToken); },
-                volume: 0.5
-            });
-
-            // Error handling
-            player.addListener("initialization_error", ({ message }) => { console.error(message); });
-            player.addListener("authentication_error", ({ message }) => { console.error(message); });
-            player.addListener("account_error", ({ message }) => { console.error(message); });
-            player.addListener("playback_error", ({ message }) => { console.error(message); });
-
-            // Playback state changes
-            player.addListener("player_state_changed", (state) => {
-                if (!state) return;
-                console.log(state);
-            });
-
-            // Ready to play
-            player.addListener("ready", ({ device_id }) => {
-                console.log("Player is ready with device ID", device_id);
-            });
-
-            // Connect to the player
-            player.connect();
-        };
-    };
 }
 
 // Search Spotify API for tracks
@@ -135,76 +118,64 @@ function displayResults(data) {
 
 // Play selected song
 function playSong(uri, trackName) {
-    if (player && currentTrackUri !== uri) {
-        currentTrackUri = uri; // Store the current song's URI
+    if (player) {
         currentTrackDiv.textContent = `Playing: ${trackName}`;
         player.play({ uris: [uri] }).then(() => {
             isPlaying = true;
             playPauseBtn.textContent = "Pause";
-        }).catch(e => {
-            console.error('Error playing song:', e);
-        });
+        }).catch(e => console.log(e));
     }
 }
 
-// Handle play/pause toggle
-function togglePlayPause() {
-    if (isPlaying) {
-        player.pause().then(() => {
-            isPlaying = false;
-            playPauseBtn.textContent = "Play";
-        });
-    } else {
-        player.resume().then(() => {
-            isPlaying = true;
-            playPauseBtn.textContent = "Pause";
-        });
-    }
+// Initialize Spotify Player
+function initializeSpotifyPlayer() {
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    document.body.appendChild(script);
+
+    script.onload = () => {
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            player = new Spotify.Player({
+                name: "Web Playback SDK",
+                getOAuthToken: (cb) => { cb(accessToken); },
+                volume: 0.5
+            });
+
+            // Error handling
+            player.addListener("initialization_error", ({ message }) => { console.error(message); });
+            player.addListener("authentication_error", ({ message }) => { console.error(message); });
+            player.addListener("account_error", ({ message }) => { console.error(message); });
+            player.addListener("playback_error", ({ message }) => { console.error(message); });
+
+            // Playback state changes
+            player.addListener("player_state_changed", (state) => {
+                if (!state) return;
+                console.log(state);
+            });
+
+            // Ready to play
+            player.addListener("ready", ({ device_id }) => {
+                console.log("Player is ready with device ID " + device_id);
+            });
+
+            // Connect to the player
+            player.connect();
+        };
+    };
 }
 
-// Skip to next track
-function nextTrack() {
-    player.nextTrack();
-}
-
-// Skip to previous track
-function prevTrack() {
-    player.previousTrack();
-}
-
-// Event listeners
+// Event listener for search button
 searchBtn.addEventListener("click", async () => {
-    const query = searchInput.value.trim();
+    const query = searchInput.value;
     if (query) {
         const data = await searchSpotify(query);
-        if (data) {
-            displayResults(data);
-        }
-    } else {
-        alert("Please enter a search query.");
+        displayResults(data);
     }
 });
 
-playPauseBtn.addEventListener("click", togglePlayPause);
-nextBtn.addEventListener("click", nextTrack);
-prevBtn.addEventListener("click", prevTrack);
-
-loginBtn.addEventListener("click", () => {
-    if (!accessToken) {
-        loginSpotify(); // Redirect to Spotify login if not logged in
-    } else {
-        logoutSpotify(); // Logout if already logged in
-    }
-});
-
-// Logout Spotify
-function logoutSpotify() {
-    localStorage.removeItem("access_token");
-    accessToken = null;
-    loginBtn.textContent = "Login to Spotify";
-    loginBtn.disabled = false;
-    currentTrackDiv.textContent = "";
-    resultsDiv.innerHTML = "";
+// Get access token after redirect
+const urlParams = new URLSearchParams(window.location.search);
+const code = urlParams.get("code");
+if (code) {
+    getAccessTokenFromCode(code);
 }
-
-checkLoginStatus();
