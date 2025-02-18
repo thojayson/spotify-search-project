@@ -187,7 +187,7 @@ function prevTrack() {
 // Log out the user
 function logoutSpotify() {
     localStorage.removeItem("access_token");
-    window.location.href = "/"; // Reload page to reset UI
+    window.location.href = "https://thojayson.github.io/spotify-search-project/"; // Redirect to homepage
 }
 
 // Event listeners
