@@ -3,32 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Search & Play</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Spotify Web Player</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <nav>
-        <div class="logo">
-            <h1>Spotify Search & Play</h1>
-        </div>
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search for songs, artists, or genres" />
-            <button id="searchBtn">Search</button>
-        </div>
-        <button id="loginBtn">Login with Spotify</button>
-    </nav>
+    <div id="login-section">
+        <button id="login-btn">Login with Spotify</button>
+    </div>
 
-    <div id="results"></div>
-
-    <div id="spotify-player">
-        <div id="player-controls">
-            <button id="prevBtn">Prev</button>
-            <button id="playPauseBtn">Play</button>
-            <button id="nextBtn">Next</button>
-            <div id="current-track">No track playing</div>
+    <div id="player-section" style="display:none;">
+        <div id="player-container">
+            <div id="track-info">
+                <p id="track-name">Track Name</p>
+                <p id="artist-name">Artist Name</p>
+            </div>
+            <button id="play-pause-btn">Play</button>
+            <button id="next-btn">Next</button>
+            <button id="prev-btn">Prev</button>
         </div>
     </div>
 
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
