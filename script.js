@@ -1,52 +1,41 @@
-// Initialize Spotify Player with explicit volume control
-function initializeSpotifyPlayer() {
-    const script = document.createElement("script");
-    script.src = "https://sdk.scdn.co/spotify-player.js";
-    document.body.appendChild(script);
+// Display search results with correct onclick handler
+function displayResults(data) {
+    resultsDiv.innerHTML = ""; // Clear previous results
 
-    script.onload = () => {
-        window.onSpotifyWebPlaybackSDKReady = () => {
-            player = new Spotify.Player({
-                name: "Web Playback SDK",
-                getOAuthToken: (cb) => { cb(accessToken); },
-                volume: 0.5 // Set the volume to 50% initially
-            });
+    if (data && data.tracks && data.tracks.items.length > 0) {
+        data.tracks.items.forEach(track => {
+            const trackDiv = document.createElement("div");
+            trackDiv.classList.add("result-item");
 
-            // Error handling
-            player.addListener("initialization_error", ({ message }) => { console.error("Initialization Error: ", message); });
-            player.addListener("authentication_error", ({ message }) => { console.error("Authentication Error: ", message); });
-            player.addListener("account_error", ({ message }) => { console.error("Account Error: ", message); });
-            player.addListener("playback_error", ({ message }) => { console.error("Playback Error: ", message); });
+            const trackImage = track.album.images[2]?.url || "https://via.placeholder.com/50";
+            const trackName = track.name;
+            const artistName = track.artists[0].name;
+            const trackUri = track.uri;  // Correctly access the track URI
 
-            // Playback state changes
-            player.addListener("player_state_changed", (state) => {
-                if (!state) return;
-                console.log("Player State Changed: ", state);
-            });
+            // Now the onclick function will call playSong with trackUri and trackName
+            trackDiv.innerHTML = `
+                <img src="${trackImage}" alt="${trackName}" />
+                <a href="javascript:void(0);" onclick="playSong('${trackUri}', '${trackName}')">${trackName} - ${artistName}</a>
+            `;
+            resultsDiv.appendChild(trackDiv);
+        });
+    } else {
+        resultsDiv.innerHTML = "No results found.";
+    }
+}
 
-            // Ready to play
-            player.addListener("ready", ({ device_id }) => {
-                console.log("Player is ready with device ID", device_id);
-            });
+// Play song using track URI
+function playSong(uri, trackName) {
+    if (player && uri) {
+        currentTrackUri = uri;  // Store the URI of the current song
+        currentTrackDiv.textContent = `Playing: ${trackName}`;
 
-            // Volume check
-            player.addListener("volume_changed", (volume) => {
-                console.log("Volume changed to: ", volume);
-            });
-
-            // Check if the player is connected
-            player.addListener("ready", ({ device_id }) => {
-                console.log("Player connected with device ID: ", device_id);
-            });
-
-            // Connect to the player
-            player.connect().then((success) => {
-                if (success) {
-                    console.log("Player connected successfully!");
-                } else {
-                    console.log("Failed to connect to the player.");
-                }
-            });
-        };
-    };
+        // Play the song through the player
+        player.play({ uris: [uri] }).then(() => {
+            isPlaying = true;
+            playPauseBtn.textContent = "Pause";  // Change button to "Pause"
+        }).catch((error) => {
+            console.error("Error playing song: ", error);
+        });
+    }
 }
