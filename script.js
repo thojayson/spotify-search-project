@@ -3,9 +3,6 @@ const searchInput = document.getElementById("searchInput");
 const resultsDiv = document.getElementById("results");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
-const playPauseBtn = document.getElementById("playPauseBtn");
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
 const currentTrackDiv = document.getElementById("current-track");
 const userInfoDiv = document.getElementById("user-info");
 const userNameDiv = document.getElementById("user-name");
@@ -23,12 +20,15 @@ function checkLoginStatus() {
     const token = localStorage.getItem("access_token");
     if (token) {
         accessToken = token;
-        loginBtn.textContent = "Logged In";
         loginBtn.style.display = "none";
         logoutBtn.style.display = "block";
         userInfoDiv.style.display = "block";
-        getUserInfo();  // Fetch user info
+        getUserInfo();  // Fetch user info and display name
         initializeSpotifyPlayer();  // Initialize the player when logged in
+    } else {
+        loginBtn.style.display = "block";
+        logoutBtn.style.display = "none";
+        userInfoDiv.style.display = "none";
     }
 }
 
@@ -72,7 +72,7 @@ async function getUserInfo() {
 
     const data = await response.json();
     if (data) {
-        userNameDiv.textContent = data.display_name; // Show the user's name
+        userNameDiv.textContent = `Welcome, ${data.display_name}`; // Show the user's name
     }
 }
 
@@ -98,7 +98,6 @@ function displayResults(data) {
             trackDiv.classList.add("result-item");
 
             const trackImage = track.album.images[2]?.url || "https://via.placeholder.com/50";
-            const trackLink = track.external_urls.spotify;
             trackDiv.innerHTML = `
                 <img src="${trackImage}" alt="${track.name}" />
                 <a href="javascript:void(0)" onclick="playSong('${track.uri}', '${track.name}')">${track.name} - ${track.artists[0].name}</a>
@@ -117,7 +116,6 @@ function playSong(uri, trackName) {
         currentTrackDiv.textContent = `Playing: ${trackName}`;
         player.play({ uris: [uri] }).then(() => {
             isPlaying = true;
-            playPauseBtn.textContent = "Pause";  // Change button to "Pause"
         }).catch(e => console.log(e));
     }
 }
@@ -159,31 +157,6 @@ function initializeSpotifyPlayer() {
     };
 }
 
-// Handle play/pause toggle
-function togglePlayPause() {
-    if (isPlaying) {
-        player.pause().then(() => {
-            isPlaying = false;
-            playPauseBtn.textContent = "Play";  // Change button to "Play"
-        });
-    } else {
-        player.resume().then(() => {
-            isPlaying = true;
-            playPauseBtn.textContent = "Pause";  // Change button to "Pause"
-        });
-    }
-}
-
-// Skip to next track
-function nextTrack() {
-    player.nextTrack();
-}
-
-// Skip to previous track
-function prevTrack() {
-    player.previousTrack();
-}
-
 // Log out the user
 function logoutSpotify() {
     localStorage.removeItem("access_token");
@@ -203,9 +176,6 @@ searchBtn.addEventListener("click", async () => {
 
 loginBtn.addEventListener("click", loginSpotify);
 logoutBtn.addEventListener("click", logoutSpotify);
-playPauseBtn.addEventListener("click", togglePlayPause);
-prevBtn.addEventListener("click", prevTrack);
-nextBtn.addEventListener("click", nextTrack);
 
 // Initialize page if the user is already logged in
 checkLoginStatus();
