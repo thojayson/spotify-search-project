@@ -7,39 +7,64 @@ const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
 
 // Function to get access token from Spotify API
 async function getAccessToken() {
-    const response = await fetch("https://accounts.spotify.com/api/token", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": "Basic " + btoa(clientID + ":" + clientSecret)
-        },
-        body: new URLSearchParams({
-            grant_type: "client_credentials"
-        })
-    });
+    try {
+        const response = await fetch("https://accounts.spotify.com/api/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": "Basic " + btoa(clientID + ":" + clientSecret)
+            },
+            body: new URLSearchParams({
+                grant_type: "client_credentials"
+            })
+        });
 
-    const data = await response.json();
-    return data.access_token;
+        const data = await response.json();
+        if (data.error) {
+            console.error("Error fetching access token:", data.error);
+            return null;
+        }
+        return data.access_token;
+    } catch (error) {
+        console.error("Error fetching access token:", error);
+        return null;
+    }
 }
 
 // Function to search Spotify
 async function searchSpotify(query) {
-    const token = await getAccessToken();
-    const response = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track,artist,genre&limit=10`, {
-        method: "GET",
-        headers: {
-            "Authorization": "Bearer " + token
+    try {
+        const token = await getAccessToken();
+        if (!token) {
+            resultsDiv.innerHTML = "Error fetching token. Please try again later.";
+            return;
         }
-    });
 
-    const data = await response.json();
-    return data;
+        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,genre&limit=10`, {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            console.error("Error in API response:", data.error);
+            resultsDiv.innerHTML = "Error fetching results. Please try again later.";
+            return;
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error during search:", error);
+        resultsDiv.innerHTML = "Error during search. Please try again later.";
+    }
 }
 
 // Display search results
 function displayResults(data) {
     resultsDiv.innerHTML = "";
-    if (data.tracks && data.tracks.items.length > 0) {
+    if (data && data.tracks && data.tracks.items.length > 0) {
         data.tracks.items.forEach(track => {
             const trackDiv = document.createElement("div");
             trackDiv.classList.add("result-item");
@@ -60,10 +85,12 @@ function displayResults(data) {
 
 // Event listener for search button
 searchBtn.addEventListener("click", async () => {
-    const query = searchInput.value;
+    const query = searchInput.value.trim();
     if (query) {
         const data = await searchSpotify(query);
-        displayResults(data);
+        if (data) {
+            displayResults(data);
+        }
     } else {
         alert("Please enter a search query.");
     }
