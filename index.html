@@ -5,9 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Search & Play</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background: #1db954;
+            color: white;
+            padding: 1rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo h1 {
+            margin: 0;
+        }
+
+        nav .search-container {
+            display: flex;
+        }
+
+        nav input {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        nav button {
+            padding: 0.5rem 1rem;
+            background-color: #1db954;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #results {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        #spotify-player {
+            display: none;
+            padding: 20px;
+            background: #000;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            left: 0;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #121212;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+        }
+
+        .playlist-item {
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .playlist-item:hover {
+            color: #1db954;
+        }
+
+        .search-results {
+            flex: 1;
+            margin-left: 270px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav>
         <div class="logo">
             <h1>Spotify Search & Play</h1>
@@ -20,11 +122,17 @@
         <button id="loginBtn">Login with Spotify</button>
     </nav>
 
-    <!-- Search Results -->
-    <div id="results" class="results-container"></div>
+    <!-- Sidebar for Playlists -->
+    <div class="sidebar" id="playlistSidebar">
+        <h2>Your Playlists</h2>
+        <div id="playlists"></div>
+    </div>
+
+    <!-- Main Content Area for Search Results -->
+    <div id="results" class="search-results"></div>
 
     <!-- Spotify Web Playback Player -->
-    <div id="spotify-player" style="display:none;">
+    <div id="spotify-player">
         <div id="player"></div>
         <button id="playBtn">Play</button>
         <button id="pauseBtn">Pause</button>
@@ -42,6 +150,8 @@
         const nextBtn = document.getElementById("nextBtn");
         const prevBtn = document.getElementById("prevBtn");
         const spotifyPlayerDiv = document.getElementById("spotify-player");
+        const playlistSidebar = document.getElementById("playlistSidebar");
+        const playlistsDiv = document.getElementById("playlists");
 
         const clientID = "91786cabf39742208a39728600d93595";
         const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
@@ -58,6 +168,7 @@
                 loginBtn.textContent = "Logged In";
                 loginBtn.disabled = true;
                 initializeSpotifyPlayer();  // Initialize the player when logged in
+                loadPlaylists(); // Load playlists once logged in
             }
         }
 
@@ -88,6 +199,41 @@
                 localStorage.setItem("access_token", accessToken); // Store token
                 window.location.href = "/"; // Redirect back to homepage
             }
+        }
+
+        // Load user's playlists
+        async function loadPlaylists() {
+            const response = await fetch("https://api.spotify.com/v1/me/playlists", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + accessToken
+                }
+            });
+
+            const data = await response.json();
+            playlistsDiv.innerHTML = "";
+            if (data && data.items) {
+                data.items.forEach(playlist => {
+                    const playlistDiv = document.createElement("div");
+                    playlistDiv.classList.add("playlist-item");
+                    playlistDiv.textContent = playlist.name;
+                    playlistDiv.addEventListener("click", () => loadPlaylistTracks(playlist.id));
+                    playlistsDiv.appendChild(playlistDiv);
+                });
+            }
+        }
+
+        // Load tracks from a specific playlist
+        async function loadPlaylistTracks(playlistId) {
+            const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + accessToken
+                }
+            });
+
+            const data = await response.json();
+            displayResults(data);
         }
 
         // Search Spotify API for tracks
