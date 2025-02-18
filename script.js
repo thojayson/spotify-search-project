@@ -7,8 +7,8 @@ const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const currentTrackDiv = document.getElementById("current-track");
 
-const clientID = "YOUR_CLIENT_ID"; // Replace with your client ID
-const clientSecret = "YOUR_CLIENT_SECRET"; // Replace with your client secret
+const clientID = "91786cabf39742208a39728600d93595"; // Replace with your client ID
+const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb"; // Replace with your client secret
 const redirectUri = "https://thojayson.github.io/spotify-search-project/";
 let accessToken = null;
 let player = null;
