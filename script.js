@@ -78,15 +78,23 @@ async function getUserInfo() {
 
 // Search Spotify API for tracks
 async function searchSpotify(query) {
-    const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,album&limit=10`, {
-        method: "GET",
-        headers: {
-            "Authorization": "Bearer " + accessToken
-        }
-    });
+    try {
+        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,album&limit=10`, {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + accessToken
+            }
+        });
 
-    const data = await response.json();
-    return data;
+        const data = await response.json();
+        if (data.error) {
+            console.error("Error fetching search results:", data.error);
+            return;
+        }
+        return data;
+    } catch (error) {
+        console.error("Error in searchSpotify function:", error);
+    }
 }
 
 // Display search results
@@ -170,6 +178,8 @@ searchBtn.addEventListener("click", async () => {
         const data = await searchSpotify(query);
         if (data) {
             displayResults(data);
+        } else {
+            resultsDiv.innerHTML = "Error occurred while fetching data.";
         }
     }
 });
