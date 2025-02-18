@@ -1,6 +1,5 @@
 body {
     font-family: Arial, sans-serif;
-    display: flex;
     margin: 0;
     padding: 0;
 }
@@ -40,10 +39,9 @@ nav button {
 }
 
 #results {
-    flex: 1;
     padding: 20px;
+    margin-top: 20px;
     overflow-y: auto;
-    margin-left: 270px; /* Adjust this to the width of the sidebar */
 }
 
 .result-item {
@@ -69,33 +67,17 @@ nav button {
     left: 0;
 }
 
-.sidebar {
-    width: 250px;
-    background: #121212;
-    color: white;
-    padding: 20px;
+#player {
     display: flex;
-    flex-direction: column;
-    position: fixed;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    overflow-y: auto;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.sidebar h2 {
-    margin-top: 0;
-}
-
-.playlist-item {
-    margin-bottom: 10px;
+#player button {
+    padding: 10px;
+    background-color: #1db954;
+    border: none;
+    color: white;
+    border-radius: 4px;
     cursor: pointer;
-}
-
-.playlist-item:hover {
-    color: #1db954;
-}
-
-.search-results {
-    flex: 1;
 }
