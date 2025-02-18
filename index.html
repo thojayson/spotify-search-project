@@ -102,6 +102,10 @@
             margin-left: 20px;
         }
 
+        #user-info {
+            color: white;
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
@@ -113,8 +117,10 @@
             <input type="text" id="searchInput" placeholder="Search for songs, artists, or genres" />
             <button id="searchBtn">Search</button>
         </div>
-        <!-- Login Button -->
+        <!-- Login/Logout Button -->
         <button id="loginBtn">Login with Spotify</button>
+        <button id="logoutBtn" style="display:none;">Log Out</button>
+        <div id="user-info" style="display:none;">Welcome, <span id="user-name"></span></div>
     </nav>
 
     <!-- Main Content Area for Search Results -->
@@ -135,10 +141,13 @@
         const searchInput = document.getElementById("searchInput");
         const resultsDiv = document.getElementById("results");
         const loginBtn = document.getElementById("loginBtn");
+        const logoutBtn = document.getElementById("logoutBtn");
         const playPauseBtn = document.getElementById("playPauseBtn");
         const prevBtn = document.getElementById("prevBtn");
         const nextBtn = document.getElementById("nextBtn");
         const currentTrackDiv = document.getElementById("current-track");
+        const userInfoDiv = document.getElementById("user-info");
+        const userNameDiv = document.getElementById("user-name");
 
         const clientID = "91786cabf39742208a39728600d93595";
         const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
@@ -154,7 +163,10 @@
             if (token) {
                 accessToken = token;
                 loginBtn.textContent = "Logged In";
-                loginBtn.disabled = true;
+                loginBtn.style.display = "none";
+                logoutBtn.style.display = "block";
+                userInfoDiv.style.display = "block";
+                getUserInfo();  // Fetch user info
                 initializeSpotifyPlayer();  // Initialize the player when logged in
             }
         }
@@ -185,6 +197,21 @@
                 accessToken = data.access_token;
                 localStorage.setItem("access_token", accessToken); // Store token
                 window.location.href = "/"; // Redirect back to homepage
+            }
+        }
+
+        // Get the user's profile information
+        async function getUserInfo() {
+            const response = await fetch("https://api.spotify.com/v1/me", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + accessToken
+                }
+            });
+
+            const data = await response.json();
+            if (data) {
+                userNameDiv.textContent = data.display_name; // Show the user's name
             }
         }
 
@@ -296,6 +323,12 @@
             player.previousTrack();
         }
 
+        // Log out the user
+        function logoutSpotify() {
+            localStorage.removeItem("access_token");
+            window.location.href = "/"; // Reload page to reset UI
+        }
+
         // Event listeners
         searchBtn.addEventListener("click", async () => {
             const query = searchInput.value.trim();
@@ -304,32 +337,17 @@
                 if (data) {
                     displayResults(data);
                 }
-            } else {
-                alert("Please enter a search query.");
             }
         });
 
+        loginBtn.addEventListener("click", loginSpotify);
+        logoutBtn.addEventListener("click", logoutSpotify);
         playPauseBtn.addEventListener("click", togglePlayPause);
-        nextBtn.addEventListener("click", nextTrack);
         prevBtn.addEventListener("click", prevTrack);
+        nextBtn.addEventListener("click", nextTrack);
 
-        loginBtn.addEventListener("click", () => {
-            if (!accessToken) {
-                loginSpotify(); // Redirect to Spotify login if not logged in
-            }
-        });
-
-        // Check login status and initialize on page load
+        // Initialize page if the user is already logged in
         checkLoginStatus();
-
-        // Handle Spotify redirect after authentication
-        if (window.location.search.includes("code=")) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const code = urlParams.get("code");
-            if (code) {
-                getAccessTokenFromCode(code);
-            }
-        }
     </script>
 </body>
 </html>
