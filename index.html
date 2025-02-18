@@ -5,9 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Search & Play</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav {
+            background: #1db954;
+            color: white;
+            padding: 1rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo h1 {
+            margin: 0;
+        }
+
+        nav .search-container {
+            display: flex;
+        }
+
+        nav input {
+            padding: 0.5rem;
+            border: none;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        nav button {
+            padding: 0.5rem 1rem;
+            background-color: #1db954;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #results {
+            padding: 20px;
+            margin-top: 20px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        #spotify-player {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            padding: 20px;
+            left: 0;
+        }
+
+        #player-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        #player-controls button {
+            padding: 10px;
+            background-color: #1db954;
+            border: none;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        #player-controls button:hover {
+            background-color: #1aaf47;
+        }
+
+        #current-track {
+            color: white;
+            margin-left: 20px;
+        }
+
+    </style>
 </head>
 <body>
-    <!-- Navigation Bar -->
     <nav>
         <div class="logo">
             <h1>Spotify Search & Play</h1>
@@ -20,16 +117,17 @@
         <button id="loginBtn">Login with Spotify</button>
     </nav>
 
-    <!-- Search Results -->
-    <div id="results" class="results-container"></div>
+    <!-- Main Content Area for Search Results -->
+    <div id="results"></div>
 
-    <!-- Spotify Web Playback Player -->
-    <div id="spotify-player" style="display:none;">
-        <div id="player"></div>
-        <button id="playBtn">Play</button>
-        <button id="pauseBtn">Pause</button>
-        <button id="nextBtn">Next</button>
-        <button id="prevBtn">Prev</button>
+    <!-- Spotify Player Controls -->
+    <div id="spotify-player">
+        <div id="player-controls">
+            <button id="prevBtn">Prev</button>
+            <button id="playPauseBtn">Play</button>
+            <button id="nextBtn">Next</button>
+            <div id="current-track">No track playing</div>
+        </div>
     </div>
 
     <script>
@@ -37,11 +135,10 @@
         const searchInput = document.getElementById("searchInput");
         const resultsDiv = document.getElementById("results");
         const loginBtn = document.getElementById("loginBtn");
-        const playBtn = document.getElementById("playBtn");
-        const pauseBtn = document.getElementById("pauseBtn");
-        const nextBtn = document.getElementById("nextBtn");
+        const playPauseBtn = document.getElementById("playPauseBtn");
         const prevBtn = document.getElementById("prevBtn");
-        const spotifyPlayerDiv = document.getElementById("spotify-player");
+        const nextBtn = document.getElementById("nextBtn");
+        const currentTrackDiv = document.getElementById("current-track");
 
         const clientID = "91786cabf39742208a39728600d93595";
         const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
@@ -49,6 +146,7 @@
         let accessToken = null;
         let player = null;
         let currentTrackUri = null;
+        let isPlaying = false;
 
         // Check if the user is logged in
         function checkLoginStatus() {
@@ -115,7 +213,7 @@
                     const trackLink = track.external_urls.spotify;
                     trackDiv.innerHTML = `
                         <img src="${trackImage}" alt="${track.name}" />
-                        <a href="javascript:void(0)" onclick="playSong('${track.uri}')">${track.name} - ${track.artists[0].name}</a>
+                        <a href="javascript:void(0)" onclick="playSong('${track.uri}', '${track.name}')">${track.name} - ${track.artists[0].name}</a>
                     `;
                     resultsDiv.appendChild(trackDiv);
                 });
@@ -125,10 +223,14 @@
         }
 
         // Play selected song
-        function playSong(uri) {
+        function playSong(uri, trackName) {
             if (player) {
                 currentTrackUri = uri;  // Store the current song's URI
-                player.play({ uris: [uri] }).catch(e => console.log(e));
+                currentTrackDiv.textContent = `Playing: ${trackName}`;
+                player.play({ uris: [uri] }).then(() => {
+                    isPlaying = true;
+                    playPauseBtn.textContent = "Pause";  // Change button to "Pause"
+                }).catch(e => console.log(e));
             }
         }
 
@@ -161,13 +263,37 @@
                     // Ready to play
                     player.addListener("ready", ({ device_id }) => {
                         console.log("Player is ready with device ID", device_id);
-                        spotifyPlayerDiv.style.display = "block";
                     });
 
                     // Connect to the player
                     player.connect();
                 };
             };
+        }
+
+        // Handle play/pause toggle
+        function togglePlayPause() {
+            if (isPlaying) {
+                player.pause().then(() => {
+                    isPlaying = false;
+                    playPauseBtn.textContent = "Play";  // Change button to "Play"
+                });
+            } else {
+                player.resume().then(() => {
+                    isPlaying = true;
+                    playPauseBtn.textContent = "Pause";  // Change button to "Pause"
+                });
+            }
+        }
+
+        // Skip to next track
+        function nextTrack() {
+            player.nextTrack();
+        }
+
+        // Skip to previous track
+        function prevTrack() {
+            player.previousTrack();
         }
 
         // Event listeners
@@ -182,6 +308,10 @@
                 alert("Please enter a search query.");
             }
         });
+
+        playPauseBtn.addEventListener("click", togglePlayPause);
+        nextBtn.addEventListener("click", nextTrack);
+        prevBtn.addEventListener("click", prevTrack);
 
         loginBtn.addEventListener("click", () => {
             if (!accessToken) {
