@@ -1,3 +1,10 @@
+// When redirecting the user to Spotify for authentication
+const scopes = 'user-read-private user-read-email streaming playlist-read-private user-library-read';
+
+const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=${scopes}`;
+
+window.location.href = authUrl;
+
 // Display search results with correct onclick handler
 function displayResults(data) {
     resultsDiv.innerHTML = ""; // Clear previous results
