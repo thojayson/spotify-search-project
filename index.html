@@ -101,12 +101,6 @@
             color: white;
             margin-left: 20px;
         }
-
-        /* User Info Section */
-        #user-info {
-            color: white;
-        }
-
     </style>
 </head>
 <body>
@@ -118,12 +112,11 @@
             <input type="text" id="searchInput" placeholder="Search for songs, artists, or genres" />
             <button id="searchBtn">Search</button>
         </div>
-        <!-- Login/Logout Button and User Info -->
-        <div id="user-info" style="display:none;">
-            <span id="user-name"></span> <!-- This will display the user's name -->
-        </div>
+        <!-- Username Display -->
+        <div id="usernameDiv" style="display: none;"></div>
+        <!-- Login/Logout Button -->
         <button id="loginBtn">Login with Spotify</button>
-        <button id="logoutBtn" style="display:none;">Logout</button>
+        <button id="logoutBtn" style="display: none;">Logout</button>
     </nav>
 
     <!-- Main Content Area for Search Results -->
