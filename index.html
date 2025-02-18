@@ -1,29 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spotify Web Player</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div id="login-section">
+
+    <!-- Login Section -->
+    <div id="login-section" class="login-section">
         <button id="login-btn">Login with Spotify</button>
     </div>
 
-    <div id="player-section" style="display:none;">
-        <div id="player-container">
-            <div id="track-info">
-                <p id="track-name">Track Name</p>
-                <p id="artist-name">Artist Name</p>
-            </div>
+    <!-- Player Section -->
+    <div id="player-section" class="player-section" style="display:none;">
+        <div id="track-info">
+            <div id="track-name">Track Name</div>
+            <div id="artist-name">Artist Name</div>
+        </div>
+        <div id="controls">
+            <button id="prev-btn">Prev</button>
             <button id="play-pause-btn">Play</button>
             <button id="next-btn">Next</button>
-            <button id="prev-btn">Prev</button>
         </div>
     </div>
 
-    <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
