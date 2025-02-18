@@ -1,43 +1,107 @@
-// Your client ID and redirect URI
-const clientId = '91786cabf39742208a39728600d93595';
-const redirectUri = 'https://thojayson.github.io/spotify-search-project/';
-const scopes = 'streaming user-read-email user-library-read';
+const searchBtn = document.getElementById("searchBtn");
+const searchInput = document.getElementById("searchInput");
+const resultsDiv = document.getElementById("results");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const playPauseBtn = document.getElementById("playPauseBtn");
+const prevBtn = document.getElementById("prevBtn");
+const nextBtn = document.getElementById("nextBtn");
+const currentTrackDiv = document.getElementById("current-track");
+const userInfoDiv = document.getElementById("user-info");
+const userNameDiv = document.getElementById("user-name");
 
-// Get the access token from the URL after redirect
-function getAccessToken() {
-    const hash = window.location.hash.substring(1).split('&');
-    const params = {};
-    hash.forEach(item => {
-        const pair = item.split('=');
-        params[pair[0]] = decodeURIComponent(pair[1]);
-    });
-    return params.access_token;
+const clientID = "91786cabf39742208a39728600d93595";
+const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
+const redirectUri = "https://thojayson.github.io/spotify-search-project/";
+let accessToken = null;
+let player = null;
+let currentTrackUri = null;
+let isPlaying = false;
+
+// Check if the user is logged in
+function checkLoginStatus() {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        accessToken = token;
+        loginBtn.textContent = "Logged In";
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "block";
+        userInfoDiv.style.display = "block";
+        getUserInfo();  // Fetch user info
+        initializeSpotifyPlayer();  // Initialize the player when logged in
+    }
 }
 
-// Redirect to Spotify authorization URL if access token is not found
-function authorizeSpotify() {
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+// Redirect to Spotify login
+function loginSpotify() {
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-library-read playlist-read-private playlist-read-collaborative streaming`;
     window.location.href = authUrl;
+}
+
+// Get access token from authorization code
+async function getAccessTokenFromCode(code) {
+    const response = await fetch("https://accounts.spotify.com/api/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": "Basic " + btoa(clientID + ":" + clientSecret)
+        },
+        body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code: code,
+            redirect_uri: redirectUri
+        })
+    });
+
+    const data = await response.json();
+    if (data.access_token) {
+        accessToken = data.access_token;
+        localStorage.setItem("access_token", accessToken); // Store token
+        window.location.href = "/"; // Redirect back to homepage
+    }
+}
+
+// Get the user's profile information
+async function getUserInfo() {
+    const response = await fetch("https://api.spotify.com/v1/me", {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + accessToken
+        }
+    });
+
+    const data = await response.json();
+    if (data) {
+        userNameDiv.textContent = data.display_name; // Show the user's name
+    }
+}
+
+// Search Spotify API for tracks
+async function searchSpotify(query) {
+    const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,artist,album&limit=10`, {
+        method: "GET",
+        headers: {
+            "Authorization": "Bearer " + accessToken
+        }
+    });
+
+    const data = await response.json();
+    return data;
 }
 
 // Display search results
 function displayResults(data) {
-    resultsDiv.innerHTML = ""; // Clear previous results
-
+    resultsDiv.innerHTML = "";
     if (data && data.tracks && data.tracks.items.length > 0) {
         data.tracks.items.forEach(track => {
             const trackDiv = document.createElement("div");
             trackDiv.classList.add("result-item");
 
             const trackImage = track.album.images[2]?.url || "https://via.placeholder.com/50";
-            const trackName = track.name;
-            const artistName = track.artists[0].name;
-            const trackUri = track.uri;
-
-            // Add an event listener to play the selected song
+            const trackLink = track.external_urls.spotify;
             trackDiv.innerHTML = `
-                <img src="${trackImage}" alt="${trackName}" />
-                <a href="javascript:void(0);" onclick="playSong('${trackUri}', '${trackName}')">${trackName} - ${artistName}</a>
+                <img src="${trackImage}" alt="${track.name}" />
+                <a href="javascript:void(0)" onclick="playSong('${track.uri}', '${track.name}')">${track.name} - ${track.artists[0].name}</a>
             `;
             resultsDiv.appendChild(trackDiv);
         });
@@ -46,24 +110,20 @@ function displayResults(data) {
     }
 }
 
-// Play the selected song
+// Play selected song
 function playSong(uri, trackName) {
-    if (player && uri) {
-        currentTrackUri = uri;  // Store the URI of the current song
+    if (player) {
+        currentTrackUri = uri;  // Store the current song's URI
         currentTrackDiv.textContent = `Playing: ${trackName}`;
-
-        // Play the song through the player
         player.play({ uris: [uri] }).then(() => {
             isPlaying = true;
             playPauseBtn.textContent = "Pause";  // Change button to "Pause"
-        }).catch((error) => {
-            console.error("Error playing song: ", error);
-        });
+        }).catch(e => console.log(e));
     }
 }
 
-// Initialize the Spotify player
-function initializeSpotifyPlayer(accessToken) {
+// Initialize Spotify Player
+function initializeSpotifyPlayer() {
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
     document.body.appendChild(script);
@@ -72,73 +132,80 @@ function initializeSpotifyPlayer(accessToken) {
         window.onSpotifyWebPlaybackSDKReady = () => {
             player = new Spotify.Player({
                 name: "Web Playback SDK",
-                getOAuthToken: cb => { cb(accessToken); },
+                getOAuthToken: (cb) => { cb(accessToken); },
                 volume: 0.5
             });
 
-            player.addListener("initialization_error", ({ message }) => { console.error("Initialization Error: ", message); });
-            player.addListener("authentication_error", ({ message }) => { console.error("Authentication Error: ", message); });
-            player.addListener("account_error", ({ message }) => { console.error("Account Error: ", message); });
-            player.addListener("playback_error", ({ message }) => { console.error("Playback Error: ", message); });
+            // Error handling
+            player.addListener("initialization_error", ({ message }) => { console.error(message); });
+            player.addListener("authentication_error", ({ message }) => { console.error(message); });
+            player.addListener("account_error", ({ message }) => { console.error(message); });
+            player.addListener("playback_error", ({ message }) => { console.error(message); });
 
+            // Playback state changes
+            player.addListener("player_state_changed", (state) => {
+                if (!state) return;
+                console.log(state);
+            });
+
+            // Ready to play
             player.addListener("ready", ({ device_id }) => {
                 console.log("Player is ready with device ID", device_id);
             });
 
-            player.connect().then((success) => {
-                if (success) {
-                    console.log("Player connected successfully!");
-                } else {
-                    console.log("Failed to connect to the player.");
-                }
-            });
+            // Connect to the player
+            player.connect();
         };
     };
 }
 
-// Handle Spotify login and token retrieval
-function handleLogin() {
-    const accessToken = getAccessToken();
-
-    if (accessToken) {
-        initializeSpotifyPlayer(accessToken);
+// Handle play/pause toggle
+function togglePlayPause() {
+    if (isPlaying) {
+        player.pause().then(() => {
+            isPlaying = false;
+            playPauseBtn.textContent = "Play";  // Change button to "Play"
+        });
     } else {
-        // If there's no access token, redirect to Spotify login
-        authorizeSpotify();
+        player.resume().then(() => {
+            isPlaying = true;
+            playPauseBtn.textContent = "Pause";  // Change button to "Pause"
+        });
     }
 }
 
-// Fetch Spotify search results for a query
-function searchSpotify(query) {
-    const accessToken = getAccessToken();
+// Skip to next track
+function nextTrack() {
+    player.nextTrack();
+}
 
-    if (!accessToken) {
-        console.log("Access token not found. Please log in.");
-        return;
-    }
+// Skip to previous track
+function prevTrack() {
+    player.previousTrack();
+}
 
-    const url = `https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`;
-    fetch(url, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`
+// Log out the user
+function logoutSpotify() {
+    localStorage.removeItem("access_token");
+    window.location.href = "/"; // Reload page to reset UI
+}
+
+// Event listeners
+searchBtn.addEventListener("click", async () => {
+    const query = searchInput.value.trim();
+    if (query) {
+        const data = await searchSpotify(query);
+        if (data) {
+            displayResults(data);
         }
-    })
-    .then(response => response.json())
-    .then(data => {
-        displayResults(data);
-    })
-    .catch(error => {
-        console.error("Error fetching search results: ", error);
-    });
-}
-
-// Event listener for the search button
-document.querySelector("#search-button").addEventListener("click", () => {
-    const query = document.querySelector("#search-input").value;
-    searchSpotify(query);
+    }
 });
 
-// Call the login handler on page load
-window.onload = () => {
-    handleLogin();
-};
+loginBtn.addEventListener("click", loginSpotify);
+logoutBtn.addEventListener("click", logoutSpotify);
+playPauseBtn.addEventListener("click", togglePlayPause);
+prevBtn.addEventListener("click", prevTrack);
+nextBtn.addEventListener("click", nextTrack);
+
+// Initialize page if the user is already logged in
+checkLoginStatus();
