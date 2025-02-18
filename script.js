@@ -7,8 +7,8 @@ const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const currentTrackDiv = document.getElementById("current-track");
 
-const clientID = "91786cabf39742208a39728600d93595";
-const clientSecret = "ba8b994793d54ebd9a02e8fe2271accb";
+const clientID = "YOUR_CLIENT_ID"; // Replace with your client ID
+const clientSecret = "YOUR_CLIENT_SECRET"; // Replace with your client secret
 const redirectUri = "https://thojayson.github.io/spotify-search-project/";
 let accessToken = null;
 let player = null;
@@ -28,7 +28,7 @@ function checkLoginStatus() {
 
 // Redirect to Spotify login
 function loginSpotify() {
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user-library-read playlist-read-private playlist-read-collaborative streaming`;
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=streaming user-library-read playlist-read-private playlist-read-collaborative`;
     window.location.href = authUrl;
 }
 
@@ -182,3 +182,12 @@ prevBtn.addEventListener("click", prevTrack);
 
 // Check if user is already logged in
 checkLoginStatus();
+
+// Handle Spotify login (redirect to Spotify)
+if (window.location.search.includes("code=")) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    getAccessTokenFromCode(code);
+}
+
+loginBtn.addEventListener("click", loginSpotify);
